@@ -1,3 +1,4 @@
+from time import time
 import cv2
 from skimage import metrics
 import numpy as np
@@ -10,7 +11,7 @@ def track(image1, image2):
     SHAPE = image1.shape
     KERNEL_SIZE = SHAPE[0] // 400
 
-    cv2.imshow('Frame', image1)
+    # cv2.imshow('Frame', image1)
 
     image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
     image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
@@ -33,54 +34,64 @@ def track(image1, image2):
     return thresh1
 
 
-cap = cv2.VideoCapture('small.mov')
+cap = cv2.VideoCapture(0)
 
 if (cap.isOpened() == False):
     print("Error opening video stream or file")
 
 
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
-out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
-    'M', 'J', 'P', 'G'), 10, (frame_width, frame_height))
+# frame_width = int(cap.get(3))
+# frame_height = int(cap.get(4))
+# out = cv2.VideoWriter('out.avi', cv2.VideoWriter_fourcc(
+#     'M', 'J', 'P', 'G'), 10, (frame_width, frame_height))
 
 lastframe = None
 
-# Read until video is completed
-while cap.isOpened():
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    if ret:
-        if lastframe is None:
-            lastframe = frame
-            continue
-        # Perform tracking on the previous frame
-        tracked = track(lastframe, frame)
-        draw_on = frame.copy()
-        # Update the lastframe with the current frame
-        lastframe = frame
+vid = cv2.VideoCapture(0)  # this is the magic!
+vid.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+vid.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-        contours, hier = cv2.findContours(
-            tracked, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        # Draw the contours on the current frame
-        for c in contours:
-            x, y, w, h = cv2.boundingRect(c)
-            cv2.rectangle(draw_on, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            cv2.circle(draw_on, (x+w//2, y+h//2), 5, (0, 0, 255), -1)
-
-        # Display the resulting frame
-        cv2.imshow('Frame', draw_on)
-        out.write(draw_on)
-
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-    else:
+ret, frame = vid.read()
+while ret:
+    # the 'q' button is set as the
+    # quitting button you may use any
+    # desired button of your choice
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# When everything done, release the video capture object
-out.release()
-cap.release()
+    if lastframe is None:
+        lastframe = frame
+        continue
 
-# Closes all the frames
+    start_time = time()  # We would like to measure the FPS.
+    #  Perform tracking on the previous frame
+    tracked = track(lastframe, frame)
+    draw_on = frame.copy()
+    # Update the lastframe with the current frame
+    lastframe = frame
+
+    contours, hier = cv2.findContours(
+        tracked, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    # Draw the contours on the current frame
+    for c in contours:
+        x, y, w, h = cv2.boundingRect(c)
+        cv2.rectangle(draw_on, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.circle(draw_on, (x+w//2, y+h//2), 5, (0, 0, 255), -1)
+
+    end_time = time()
+    fps = 1/np.round(end_time - start_time, 3)  # Measure the FPS.
+    print(f"Frames Per Second : {fps}")
+    # write fps
+    cv2.putText(draw_on, f"FPS: {fps}", (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.imshow('Frame', draw_on)
+
+    ret, frame = vid.read()  # Read next frame.
+
+# After the loop release the cap object
+vid.release()
+# Destroy all the windows
 cv2.destroyAllWindows()
