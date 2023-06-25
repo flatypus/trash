@@ -4,10 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "c1": "nodemon --exec python3 testing3.py -v=0",
-    "c2": "nodemon --exec python3 testing3.py -v=1"
+    "c1": "nodemon --exec python3 track_ball.py -v=0",
+    "c2": "nodemon --exec python3 track_ball.py -v=1",
+    "plot_stream" : "nodemon --exec python3 continue_plot.py",
+    "plot": "concurrently \"python3 track_ball.py -v=0\" \"python3 track_ball.py -v=1\" \"python3 continue_plot.py\""
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
 }
