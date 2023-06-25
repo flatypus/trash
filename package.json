@@ -1,0 +1,13 @@
+{
+  "name": "trash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "c1": "nodemon --exec python3 testing3.py -v=0",
+    "c2": "nodemon --exec python3 testing3.py -v=1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

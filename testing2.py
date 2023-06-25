@@ -26,6 +26,8 @@ def track(image1, image2):
 
     # Apply thresholding
     ret, thresh1 = cv2.threshold(closing, 50, 255, cv2.THRESH_BINARY)
+    cv2.imshow('Frame', thresh1)
+
     e2 = cv2.getTickCount()
     time = (e2 - e1) / cv2.getTickFrequency()
     print("Time taken : {} seconds".format(time))
@@ -70,7 +72,7 @@ while cap.isOpened():
             cv2.circle(draw_on, (x+w//2, y+h//2), 5, (0, 0, 255), -1)
 
         # Display the resulting frame
-        cv2.imshow('Frame', draw_on)
+        # cv2.imshow('Frame', draw_on)
         out.write(draw_on)
 
         if cv2.waitKey(25) & 0xFF == ord('q'):
