@@ -22,7 +22,7 @@ load_dotenv()
 # MODEL_ENDPOINT = os.environ.get("MODEL_ENDPOINT")
 # VERSION = 1
 model = YOLO(
-    "train5/weights/best.pt")
+    "yolov8_model/weights/best.pt")
 
 # rf = Roboflow(api_key=API_KEY)
 # project = rf.workspace().project(MODEL_ENDPOINT)

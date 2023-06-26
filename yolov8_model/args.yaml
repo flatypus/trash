@@ -2,7 +2,7 @@ task: detect
 mode: train
 model: yolov8s.pt
 data: datasets/data.yaml
-epochs: 100
+epochs: 300
 patience: 50
 batch: 16
 imgsz: 640
@@ -94,4 +94,4 @@ copy_paste: 0.0
 cfg: null
 v5loader: false
 tracker: botsort.yaml
-save_dir: runs\detect\train5
+save_dir: runs\detect\train8

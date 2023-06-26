@@ -14,6 +14,6 @@ There had to be a better way.
 ## The better way.
 We were you at some point in time. We realized the five seconds it took for you to get up, put the trash in the can, and get back in bed is time you will never get back. So, to all of you who have shared this emotional experience, we have built Trash.
 
-It consists of a setup of two cameras positioned towards the center of your room, where your trash can is. These cameras send the data stream over to the garbage tracking algorithm, which detects the garbage in each camera using a custom trained YOLOV8 model with over 2000 hand-labeled images. 
+It consists of a setup of two cameras positioned towards the center of your room, where your trash can is. These cameras send the data stream over to the garbage tracking algorithm, which detects the garbage in each camera using a custom trained YOLOV8 model with over 15,000 hand-labeled images. 
 
 Our algorithm then takes the combined positions of the trash in both camera streams and calculates the expected position of the trash in real life. It then can determine the final position of the trash when it hits the floor, and sends the position to our Trash robot.
