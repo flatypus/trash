@@ -1,25 +1,10 @@
-import asyncio
-import socketio
 import argparse
 import cv2
 import numpy as np
 from dotenv import load_dotenv
 from time import time, sleep
+from timer import Timer
 from ultralytics import YOLO
-
-
-sio = socketio.AsyncClient()
-
-
-@sio.event
-async def connect():
-    print('connection established')
-    await sio.emit('establish_user', {'user': 1})
-
-
-@sio.event
-async def disconnect():
-    print('disconnected from server')
 
 
 class Color():
@@ -37,26 +22,13 @@ model = YOLO("yolov8_model/weights/best.pt")
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("-v", "--video", required=True,
                         help="{int} for webcam")
-arg_parser.add_argument("-plot", "--plot", required=False,
-                        help="plot the data")
 args = vars(arg_parser.parse_args())
-should_plot = args["plot"] is not None
-
-
-class Timer():
-    def __init__(self):
-        self.start_time = time()
-
-    def reset(self):
-        self.start_time = time()
-
-    def elapsed(self):
-        return time() - self.start_time
 
 
 class Tracker():
     def find_ball(self, frame):
-        results = model.predict(frame, device="mps", verbose=False)
+        results = model.predict(frame, device="mps",
+                                verbose=False, conf=0.1, max_det=1)
         return results[0].boxes
 
     def setup_camera(self, num):
@@ -71,9 +43,9 @@ class Tracker():
         draw_on = self.frame
         center_x, center_y = int((x+x2)/2), int((y+y2)/2)
 
-        with open(f"target_{args['video']}.txt", "w" if should_plot else "a") as f:
+        with open(f"target_{args['video']}.txt", "w") as f:
             f.write(
-                f"{center_x} {center_y} {time()}{' NEW' if (target != self.last_target) else ''}\n")
+                f"{center_x} {center_y}")
 
         cv2.rectangle(draw_on, (x, y), (x2, y2), Color.GREEN, 2)
         cv2.circle(draw_on, (center_x, center_y), 5, Color.RED, -1)
@@ -100,7 +72,11 @@ class Tracker():
             center_x, center_y = int(
                 (target[0]+target[2])/2), int((target[1]+target[3])/2)
             print(f"({center_x}, {center_y})")
-            sio.emit('ball_position', {'x': center_x, 'y': center_y})
+            with open(f"target_{args['video']}.txt", "w") as f:
+                f.write(f"{center_x} {center_y}")
+        else:
+            with open(f"target_{args['video']}.txt", "w") as f:
+                f.write("no ball found")
 
         elapsed = self.timer.elapsed()
         fps = 1/np.round(elapsed, 3)
@@ -108,11 +84,6 @@ class Tracker():
 
         cv2.putText(self.frame, f"FPS: {fps}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, Color.RED, 2)
-
-    def ping_in_intervals(self):
-        while True:
-            asyncio.run(sio.emit('ping'))
-            sleep(1)
 
     def __init__(self):
         self.timer = Timer()
@@ -123,8 +94,6 @@ class Tracker():
         except:
             url = args["video"]
 
-        with open(f"target_{args['video']}.txt", "w") as f:
-            f.write("")
         self.vid = self.setup_camera(url)
 
         self.last_target = None
@@ -132,8 +101,6 @@ class Tracker():
         print("Started!!")
 
         self.ret, self.frame = self.vid.read()
-        # sio.start_background_task(self.ping)
-        thread = sio.start_background_task(self.ping_in_intervals)
         # Establish connection to the server
 
         while self.ret:
@@ -145,9 +112,7 @@ class Tracker():
 
         self.vid.release()
         cv2.destroyAllWindows()
-        asyncio.run(sio.disconnect())
 
 
 if __name__ == "__main__":
-    asyncio.run(sio.connect('http://localhost:4000'))
-    asyncio.run(Tracker())
+    Tracker()

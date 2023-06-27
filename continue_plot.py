@@ -1,86 +1,109 @@
-import matplotlib.animation as animation
-from matplotlib import style
 import matplotlib.pyplot as plt
-
-# with open("target_0.txt", "r") as f:
-#     plot_1_data = f.read().strip().split("\n")[0]
-#     plot_1_data = plot_1_data.split(" ")
-#     plot_1 = (int(plot_1_data[0]), int(plot_1_data[1]), float(plot_1_data[2]))
-#     primary.append(plot_1)
-
-
-# with open("target_1.txt", "r") as f:
-#     plot_2_data = f.read().strip().split("\n")[0]
-#     plot_2_data = plot_2_data.split(" ")
-#     plot_2 = (int(plot_2_data[0]), int(plot_2_data[1]), float(plot_2_data[2]))
-#     secondary.append(plot_2)
-# plot 3d scatter
+from time import time
+from timer import Timer
+import math
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+# set axis bounds
+ax.set_xlim3d(0, 245)
+ax.set_ylim3d(0, 360)
+ax.set_zlim3d(0, 245)
 
 
 def get_data(path):
     with open(path, "r") as f:
-        plot_data = f.read().strip().split("\n")
-        if len(plot_data) == 0 or plot_data[0].strip() == "":
-            plot_data = []
-            return plot_data
-        plot_data = [i.split(" ") for i in plot_data]
-        plot_data = [(int(i[0]), int(i[1]), float(i[2])) for i in plot_data]
-        return plot_data
+        plot_data = f.read().strip()
+        if plot_data == "no ball found" or plot_data == "":
+            return (None, None)
+        else:
+            x, y = plot_data.split()
+            return (int(x), int(y))
 
+
+# finds the angle of the ball from the camera within the plane of the camera
+def find_alpha(x):
+    # cosine law
+    if x is None:
+        return
+    # 453 pixels is 640/sqrt(2) pixels
+    # 90 degrees is camera field of view, 45 is from isoceles triangle
+    m = math.sqrt((x**2) + (453**2) -
+                  (2 * x * 453 * math.cos(math.radians(45))))
+    # sine law
+    alpha = math.asin((math.sin(math.radians(45)) * x) / m)
+    return alpha
+
+
+def get_x_y(alpha_1, alpha_2):
+    far_angle = math.pi - alpha_1 - alpha_2
+    # distance between c1 and c2 in cm
+    d_cam = 245
+    # distance from c1 to ball in cm
+    d_1 = (d_cam * math.sin(alpha_2)) / math.sin(far_angle)
+    d_2 = (d_cam * math.sin(alpha_1)) / math.sin(far_angle)
+    y = (d_2 * math.sin(alpha_2)) / math.sin(math.radians(90))
+    x = math.sqrt((d_2**2) - (y**2))
+    return (x, y)
+
+
+xyz = []
+timer = Timer()
 
 while True:
-    plot_1 = get_data("target_0.txt")
-    plot_2 = get_data("target_1.txt")
+    timer.reset()
+    dim_1, height_1 = get_data("target_0.txt")
+    dim_2, height_2 = get_data("target_1.txt")
 
-    primary, secondary = sorted(
-        [plot_1, plot_2], key=lambda x: len(x))
+    if len(xyz) == 0:
+        xyz.append((0, 0, 0, time()))
+        continue
 
-    start = None
+    if (xyz[-1][0] == dim_1 and xyz[-1][1] == height_1 and xyz[-1][2] == dim_2):
+        continue
 
-    for i, v in enumerate(primary):
-        (x, y, t) = v
-        if t > secondary[0][2]:
-            start = i
-            break
+    dim_1 = dim_1 if dim_1 is not None else xyz[-1][0]
+    dim_2 = dim_2 if dim_2 is not None else xyz[-1][1]
 
-    primary = primary[start:]
-    xyz = []
+    if height_1 is None and height_2 is not None:
+        height = height_2
+    elif height_2 is None and height_1 is not None:
+        height = height_1
+    elif height_1 is None and height_2 is None:
+        height = xyz[-1][2]
+    else:
+        height = (height_1 + height_2) / 2
 
-    last_secondary = secondary[0]
-    for i, v in enumerate(primary):
-        # the y value is the height for both primary and secondary, so just average them
-        (x, y, t) = v
-        # always ensure that the secondary is ahead of the primary
-        if secondary[0][2] > t:
-            continue
-        # if the secondary is ahead of the primary, then we need to find the closest secondary
-        # to the primary
-        for j, v2 in enumerate(secondary):
-            (x2, y2, t2) = v2
-            if t2 > t:
-                # if the secondary is ahead of the primary, then we need to find the closest secondary
-                # to the primary
-                if abs(t2-t) < abs(t2-last_secondary[2]):
-                    last_secondary = v2
-                break
-        # now we have the closest secondary to the primary, so we can average the x and y values
-        # and add them to the list
-        xyz.append((x, x2, 1000-y, t))
+    if len(xyz) > 30:
+        xyz = xyz[1:]
+
+    # angle (radians)
+    alpha_1 = find_alpha(dim_1)
+    alpha_2 = 2 * math.pi - find_alpha(dim_2)
+
+    # print(alpha_1, alpha_2)
+    x, y = get_x_y(alpha_1, alpha_2)
+
+    print(f"({x}, {y}, {360 - height})")
+    xyz.append((x, y, 360 - height, time()))
 
     if len(xyz) == 0:
         ax.scatter([], [], [], c="red", marker='o', s=100, cmap='gist_rainbow')
         continue
-    x, y, z, t = zip(*xyz)
-    ax.scatter(x, y, z, c=t, marker='o', s=100, cmap='gist_rainbow')
-    # ax.scatter(x, y, z, c=t, marker='o')
-    print("plotting")
-    plt.pause(0.02)
+    dim_1_list,  dim_2_list, height_list, time_list = zip(*xyz)
+    ax.clear()
+    ax.scatter(dim_1_list,  dim_2_list, height_list, c=time_list,
+               marker='o', s=50, cmap='gist_rainbow_r')
+    ax.scatter(x, y, 360 - height, c="red",
+               marker='o', s=160, cmap='gist_rainbow_r')
+
+    ax.set_xlabel('Side camera')
+    ax.set_ylabel('Laptop camera')
+    ax.set_zlabel('Height')
+    ax.set_xlim3d(0, 640)
+    ax.set_ylim3d(0, 360)
+    ax.set_zlim3d(0, 640)
+    plt.pause(0.015)
 
 
 plt.show()
