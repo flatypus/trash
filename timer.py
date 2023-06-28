@@ -1,5 +1,7 @@
 from time import time
 
+# Helper class to time code execution speed
+
 
 class Timer():
     def __init__(self):

@@ -2,18 +2,9 @@ import argparse
 import cv2
 import numpy as np
 from dotenv import load_dotenv
-from time import time, sleep
 from timer import Timer
 from ultralytics import YOLO
-
-
-class Color():
-    RED = (0, 0, 255)
-    GREEN = (0, 255, 0)
-    BLUE = (255, 0, 0)
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
-
+from color import Color
 
 load_dotenv()
 
@@ -43,7 +34,7 @@ class Tracker():
         draw_on = self.frame
         center_x, center_y = int((x+x2)/2), int((y+y2)/2)
 
-        with open(f"target_{args['video']}.txt", "w") as f:
+        with open(f"target_{args['video']}", "w") as f:
             f.write(
                 f"{center_x} {center_y}")
 

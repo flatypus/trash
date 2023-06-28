@@ -6,6 +6,8 @@ import math
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+# distance from camera 1 to camera 2 in cm
+D_CAM = 245
 
 
 def get_data(path):
@@ -34,10 +36,8 @@ def find_alpha(x):
 
 def get_x_y(alpha_1, alpha_2):
     far_angle = math.pi - alpha_1 - alpha_2
-    # distance between c1 and c2 in cm
-    d_cam = 245
     # distance from c2 to ball in cm
-    d_2 = (d_cam * math.sin(alpha_1)) / math.sin(far_angle)
+    d_2 = (D_CAM * math.sin(alpha_1)) / math.sin(far_angle)
     # sine law (again)
     y = (d_2 * math.sin(alpha_2)) / math.sin(math.radians(90))
     x = math.sqrt((d_2**2) - (y**2))
@@ -55,31 +55,32 @@ def predict_landing(xyz):
     # get x y and z values of the last four points
     points = [(x, y, z) for x, y, z, t in xyz[-4:]]
     delta_t = xyz[-1][3] - xyz[-4][3]
-    # data = np.array(points)
-    # datamean = data.mean(axis=0)
-    # # Do an SVD on the mean-centered data.
-    # uu, dd, vv = np.linalg.svd(data - datamean)
-    # linepts = vv[0] * np.mgrid[-1000:1000:2j][:, np.newaxis]
-    # linepts += datamean
-    # final_points = linepts.T.tolist()
-    # x1, x2 = final_points[0]
-    # y1, y2 = final_points[1]
-    # z1, z2 = final_points[2]
-    x1, y1, z1 = points[0]
-    x2, y2, z2 = points[3]
-    if (x2 - x1) == 2000:
-        return x, y
-    else:
-        vx = ((x2 - x1) / 100) / delta_t
-        vy = ((y2 - y1) / 100) / delta_t
-        vz = ((z2 - z1) / 100) / delta_t
-        ax.plot([x2, x2+(x2-x1)], [y2, y2+(y2-y1)], [z2, z2+(z2-z1)], c="r")
+    data = np.array(points)
+    datamean = data.mean(axis=0)
+    # Do an SVD on the mean-centered data.
+    uu, dd, vv = np.linalg.svd(data - datamean)
+    # length of the line should be the distance between the first and last points
+    length = round(math.sqrt(
+        ((points[0][0] - points[-1][0])**2) + ((points[0][1] - points[-1][1])**2) + ((points[0][2] - points[-1][2])**2)))
+    if length == 0:
+        return (0, 0)
 
-        print(
-            f"vx: {round(vx, 2)}m/s, vy: {round(vy, 2)}m/s, vz: {round(vz, 2)}m/s, delta_t: {round(delta_t, 2)}s")
-        times = np.roots([0.5 * -9.81, vz, height])
-        t = max(times)
-        return (vx * t * 100), (vy * t * 100)
+    linepts = vv[0] * np.mgrid[-7, 7:2j][:, np.newaxis]
+    linepts += datamean
+    final_points = linepts.T.tolist()
+    x1, x2 = final_points[0]
+    y1, y2 = final_points[1]
+    z1, z2 = final_points[2]
+
+    vx = ((x2 - x1) / 100) / delta_t
+    vy = ((y2 - y1) / 100) / delta_t
+    vz = ((z2 - z1) / 100) / delta_t
+    ax.plot([x2, x2+(x2-x1)], [y2, y2+(y2-y1)], [z2, z2+(z2-z1)], c="r")
+    # print(
+    #     f"vx: {round(vx, 2)}m/s, vy: {round(vy, 2)}m/s, vz: {round(vz, 2)}m/s, delta_t: {round(delta_t, 2)}s")
+    times = np.roots([0.5 * -9.81, vz, height])
+    t = max(times)
+    return (vx * t * 100), (vy * t * 100)
 
 
 xyz = []
@@ -87,8 +88,8 @@ timer = Timer()
 
 while True:
     timer.reset()
-    dim_1, height_1 = get_data("target_0.txt")
-    dim_2, height_2 = get_data("target_1.txt")
+    dim_1, height_1 = get_data("target_0")
+    dim_2, height_2 = get_data("target_1")
 
     if len(xyz) == 0:
         xyz.append((0, 0, 0, time()))
@@ -96,16 +97,16 @@ while True:
 
     if (xyz[-1][0] == dim_1 and xyz[-1][1] == dim_2 and xyz[-1][2] == 360 - height_1):
         continue
-    if dim_1 is None:
+    if not dim_1:
         dim_1 = xyz[-1][0]
-    if dim_2 is None:
+    if not dim_2:
         dim_2 = xyz[-1][1]
 
-    if height_1 is None and height_2 is not None:
+    if not height_1 and height_2:
         height = height_2
-    elif height_2 is None and height_1 is not None:
+    elif not height_2 and height_1:
         height = height_1
-    elif height_1 is None and height_2 is None:
+    elif not height_1 and not height_2:
         height = 360 - xyz[-1][2]
     else:
         height = (height_1 + height_2) / 2
@@ -117,18 +118,19 @@ while True:
     alpha_1 = find_alpha(dim_1)
     alpha_2 = (math.pi/2) - find_alpha(dim_2)
 
-    # print(alpha_1, alpha_2)
     x, y = get_x_y(alpha_1, alpha_2)
     # display(x, y, 360 - height)
 
     xyz.append((x, y, 360 - height, time()))
     ax.clear()
 
-    ax.plot([0, 245], [0, 0], [0, 0], c="black")
+    # axes
+    ax.plot([0, D_CAM], [0, 0], [0, 0], c="black")
     ax.plot([0, 0], [0, 360], [0, 0], c="black")
-    ax.plot([0, 0], [0, 0], [0, 245], c="black")
+    ax.plot([0, 0], [0, 0], [0, D_CAM], c="black")
 
     if len(xyz) == 0:
+        # no data
         ax.scatter([], [], [], c="red", marker='o', s=100, cmap='gist_rainbow')
     else:
         dim_1_list,  dim_2_list, height_list, time_list = zip(*xyz)
@@ -138,8 +140,12 @@ while True:
 
     # take the last four points and draw a best fit line through them
     if len(xyz) > 4:
-        pred_x, pred_y = predict_landing(xyz)
+        # code no work
+        # pred_x, pred_y = predict_landing(xyz)
+        pred_x, pred_y = x, y
         print(f"Predicted landing: ({round(pred_x, 2)}, {round(pred_y, 2)})")
+        with open("prediction", "w") as f:
+            f.write(f"{pred_x} {pred_y}")
         ax.scatter(pred_x, pred_y, 0, c="green", marker='o', s=160)
         ax.text2D(
             0.05, 0.95, f"Predicted landing: ({round(pred_x, 2)}, {round(pred_y, 2)})", transform=ax.transAxes)
@@ -147,10 +153,7 @@ while True:
     ax.set_ylabel('Laptop camera')
     ax.set_zlabel('Height')
     # set axis bounds
-    ax.set_xlim3d(0, 245)
+    ax.set_xlim3d(0, D_CAM)
     ax.set_ylim3d(0, 360)
-    ax.set_zlim3d(0, 245)
+    ax.set_zlim3d(0, D_CAM)
     plt.pause(0.015)
-
-
-plt.show()
