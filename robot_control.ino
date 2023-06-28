@@ -94,7 +94,7 @@ void loop() {
   // if (serialIn != 0) {
   //   //targety = serialIn / (wheelCircum * 1600);
   // }
-
+  
   // // if (Serial.available() > 0) {
   // //   ypos = 0;
   // //   xpos = 0;
@@ -104,15 +104,10 @@ void loop() {
   // //   // Serial.end();
   // //   // Serial.begin(9600);
   // // }
-
-
-
-
-  // // put your main code here, to run repeatedly:
 }
 
 void getpos() {
-  /digitalWrite(trigger1, HIGH);
+  /*digitalWrite(trigger1, HIGH);
   delayMicroseconds(5);
   digitalWrite(trigger1, LOW);
   duration1 = pulseIn(echo1, HIGH);
@@ -121,9 +116,8 @@ void getpos() {
   delayMicroseconds(5);
   digitalWrite(trigger2, LOW);
   duration2 = pulseIn(echo2, HIGH);
-  distance1 = 0.017duration1;
+  distance1 = 0.017 *duration1;
   distance2 = 0.017 * duration2;
   xpos = 0;
   ypos = 0;*/
-
 }
