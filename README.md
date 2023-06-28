@@ -13,6 +13,7 @@ There had to be a better way.
 
 ## The better way.
 We were you at some point in time. We realized the five seconds it took for you to get up, put the trash in the can, and get back in bed is time you will never get back. So, to all of you who have shared this emotional experience, we have built Trash.
+![image](https://github.com/flatypus/trash/assets/68029599/ba4c2bce-e5ff-4235-a1ec-37697dbbad4d)
 
 It consists of a setup of two cameras positioned towards the center of your room, where your trash can is. These cameras send the data stream over to the garbage tracking algorithm, which detects the garbage in each camera using a custom trained YOLOV8 model with over 14,000 hand-labeled images. Our algorithm then takes the combined positions of the trash in both camera streams, does some trigonometry, and calculates the expected position of the trash in real life. It then can determine the final position of the trash when it hits the floor, and sends the position to our Trash robot via Serial. We also wrote a plotting script to visualize the data in real time.
 
