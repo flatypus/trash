@@ -140,9 +140,7 @@ while True:
 
     # take the last four points and draw a best fit line through them
     if len(xyz) > 4:
-        # code no work
-        # pred_x, pred_y = predict_landing(xyz)
-        pred_x, pred_y = x, y
+        pred_x, pred_y = predict_landing(xyz)
         print(f"Predicted landing: ({round(pred_x, 2)}, {round(pred_y, 2)})")
         with open("prediction", "w") as f:
             f.write(f"{pred_x} {pred_y}")
