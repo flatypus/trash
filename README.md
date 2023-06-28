@@ -21,16 +21,16 @@ Our trash robot consists of a PETG 3D printed frame and four mecanum wheels powe
 We used the AccelStepper Arduino library to control the stepper motors. Our code takes the desired location coordinates, subtracts the current location coordinates, and does some vector math to determine the precise number of steps required for each wheel to spin to reach the desired location. As the robot continuously receives new, more accurate coordinates from the tracking system through serial communication, it uses the current number of steps each motor has taken to determine the current coordinates of the robot. These are saved as the current coordinates and the above process repeats, recalculating the number of steps for each motor to reach the new desired location. 
 
 ## Notes about the repo
- - target_0 and target_1 are continuously updated files containing the locations of trash in the two cameras. The cameras are positioned 245 cm from each other, facing 45 degrees towards the center of the room. We used files vs socket communication or an api for its simplicity.
- - track_ball.py contains the code to start a camera stream, detect the trash, and save the coordinates to the target files. Two instances of this script are run, one for each camera.
- - Simultaneously, continue_plot.py is run to plot the data in real time. This is done using matplotlib and the target files. It also handles the calculation of the expected position of the trash in real life. After it predicts the location, it saves the coordinates in another file, prediction.
- - yolov8_model is the currently used model; 47 epochs on 14256 images.
- - yolov8_model_v2 is the same dataset trained for 300 epochs, however the 47 epoch model seems to work better.
+ - `target_0` and `target_1` are continuously updated files containing the locations of trash in the two cameras. The cameras are positioned 245 cm from each other, facing 45 degrees towards the center of the room. We used files vs socket communication or an api for its simplicity.
+ - `track_ball.py` contains the code to start a camera stream, detect the trash, and save the coordinates to the target files. Two instances of this script are run, one for each camera.
+ - Simultaneously, `continue_plot.py` is run to plot the data in real time. This is done using matplotlib and the target files. It also handles the calculation of the expected position of the trash in real life. After it predicts the location, it saves the coordinates in another file, prediction.
+ - `yolov8_model` is the currently used model; 47 epochs on 14256 images.
+ - `yolov8_model_v2` is the same dataset trained for 300 epochs, however the 47 epoch model seems to work better.
 
 # Running the code
-- Install the requirements in requirements.txt
-- Run pnpm install to install concurrently, a package that allows you to run multiple scripts at once.
-- Install nodemon globally with pnpm i -g nodemon, to watch scripts for changes and restart them automatically.
+- Install the requirements in `requirements.txt`
+- Run `pnpm install` to install concurrently, a package that allows you to run multiple scripts at once.
+- Install `nodemon` globally with `pnpm i -g nodemon`, to watch scripts for changes and restart them automatically.
 - You need two cameras to run this. We used the webcam of the laptop, and a second webcam. Once you have both connected, you can run pnpm dev to start nodemon instances for two cameras and the plotter.
 - If you just want to run the system, you can run pnpm start.
 
